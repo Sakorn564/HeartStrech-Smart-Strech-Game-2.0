@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HeartStretch — Office Syndrome Prevention App</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--bg-card:#131314;--card:#1F1F1F;--border:#2a2a2a;--border-hi:#3A3A3A;--fg:#FAFAFA;--muted:#AFB5BE;--dim:#737373;--blue:#2563EB;--blue-b:#2168FD;--blue-light:#93C5FD;--teal-light:#3AE4C9;--green:#4ADE80;--grad:linear-gradient(90deg,#2168FD 0%,#1E71FA 22%,#37B1D3 55%,#39D6CB 78%,#3AE4C9 100%);--grad-d:linear-gradient(135deg,#2168FD 0%,#37B1D3 50%,#3AE4C9 100%)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
+.gt{background:var(--grad-d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.f{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
+.f.v{opacity:1;transform:none}
+.f.d1{transition-delay:.07s}.f.d2{transition-delay:.14s}.f.d3{transition-delay:.21s}.f.d4{transition-delay:.28s}.f.d5{transition-delay:.35s}.f.d6{transition-delay:.42s}
+</style>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={darkMode:"class",theme:{extend:{fontFamily:{manrope:["Manrope","system-ui","sans-serif"]}}}};</script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script>
+window.exports={};
+window.module={exports:window.exports};
+var __m={"react":window.React,"react-dom":window.ReactDOM,"react-dom/client":window.ReactDOM};
+var __noop=function(){return null};
+var __fb=new Proxy({},{get:function(_,p){return p==="__esModule"?true:__noop}});
+window.require=function(n){return __m[n]||__fb};
+__m["/utils/slide-images"]={
+  searchImage:function(){return Promise.resolve(null);},
+  generateImage:function(){return Promise.resolve(null);},
+  imageToBase64:function(u){
+    if(!u)return Promise.resolve(null);
+    if(u.startsWith("image/")||u.startsWith("data:image/"))return Promise.resolve(u.replace(/^data:/,""));
+    return fetch(u).then(function(r){return r.blob()}).then(function(b){
+      return new Promise(function(res){var rd=new FileReader();rd.onloadend=function(){res(rd.result?rd.result.replace(/^data:/,""):null)};rd.onerror=function(){res(null)};rd.readAsDataURL(b)})},
+    function(){return null});
+  }
+};
+</script>
+</head>
+<body>
+
+<div id="root"></div>
+<script type="text/babel" data-presets="env,react,typescript">
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const C = {
+  bg:"#000000", surf:"#131314", surf2:"#1F1F20", surf3:"#2A2A2C",
+  red:"#E5002F", orange:"#FCA91A", yellow:"#FCF200", green:"#00C853",
+  teal:"#00E5D1", blue:"#2266FF", purple:"#6423FF", pink:"#FF4081",
+  white:"#FFFFFF", gray:"#82828B", lgray:"#B0B0B8",
+};
+const gRed = { background:"linear-gradient(90deg,#E5002F,#FCA91A)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" };
+const gBrand = "linear-gradient(90deg,#E5002F,#FCA91A,#FCF200)";
+
+// ── 8 exercises ──
+const exercises = [
+  { id:1, name:"เอียงคอ", muscle:"คอ", dur:30, hr:[65,85], col:"#FF6B6B", fixes:"ปวดคอ/ต้นคอ",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="14" r="9" fill="none" stroke="#FF6B6B" strokeWidth="2.5"/><line x1="40" y1="23" x2="40" y2="50" stroke="#FF6B6B" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="35" x2="24" y2="46" stroke="#FF6B6B" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="35" x2="56" y2="46" stroke="#FF6B6B" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="50" x2="30" y2="68" stroke="#FF6B6B" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="50" x2="50" y2="68" stroke="#FF6B6B" strokeWidth="2.5" strokeLinecap="round"/><path d="M28 10 Q40 2 52 10" fill="none" stroke="#FF6B6B" strokeWidth="2" strokeDasharray="3,2"/></svg> },
+  { id:2, name:"หมุนไหล่", muscle:"ไหล่", dur:40, hr:[70,90], col:"#FCA91A", fixes:"ปวดไหล่/บ่า",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="14" r="9" fill="none" stroke="#FCA91A" strokeWidth="2.5"/><line x1="40" y1="23" x2="40" y2="52" stroke="#FCA91A" strokeWidth="2.5" strokeLinecap="round"/><path d="M20 32 Q14 26 20 20 Q26 14 32 20" fill="none" stroke="#FCA91A" strokeWidth="2.5" strokeLinecap="round"/><path d="M60 32 Q66 26 60 20 Q54 14 48 20" fill="none" stroke="#FCA91A" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="52" x2="30" y2="70" stroke="#FCA91A" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="52" x2="50" y2="70" stroke="#FCA91A" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+  { id:3, name:"ยืดแขน", muscle:"แขน/ไหล่", dur:35, hr:[70,92], col:"#00E5D1", fixes:"ชาแขน/ข้อศอก",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="13" r="9" fill="none" stroke="#00E5D1" strokeWidth="2.5"/><line x1="40" y1="22" x2="40" y2="52" stroke="#00E5D1" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="33" x2="62" y2="26" stroke="#00E5D1" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="33" x2="18" y2="38" stroke="#00E5D1" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="52" x2="30" y2="70" stroke="#00E5D1" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="52" x2="50" y2="70" stroke="#00E5D1" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+  { id:4, name:"ยืดหลัง", muscle:"หลัง", dur:45, hr:[72,95], col:"#2266FF", fixes:"ปวดหลัง/กระดูกสันหลัง",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="12" r="8" fill="none" stroke="#2266FF" strokeWidth="2.5"/><path d="M40 20 Q46 34 52 40 Q56 46 40 48 Q24 46 28 40 Q34 34 40 20" fill="none" stroke="#2266FF" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="48" x2="30" y2="68" stroke="#2266FF" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="48" x2="50" y2="68" stroke="#2266FF" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+  { id:5, name:"บิดลำตัว", muscle:"สะโพก/หลัง", dur:40, hr:[78,100], col:"#6423FF", fixes:"ปวดเอว/สะโพก",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="13" r="9" fill="none" stroke="#6423FF" strokeWidth="2.5"/><line x1="40" y1="22" x2="40" y2="50" stroke="#6423FF" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="34" x2="18" y2="28" stroke="#6423FF" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="34" x2="62" y2="40" stroke="#6423FF" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="50" x2="28" y2="68" stroke="#6423FF" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="50" x2="52" y2="68" stroke="#6423FF" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+  { id:6, name:"ยืดน่อง", muscle:"น่อง/ขา", dur:50, hr:[80,105], col:"#00C853", fixes:"ปวดขา/เส้นเลือดขอด",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="11" r="8" fill="none" stroke="#00C853" strokeWidth="2.5"/><line x1="40" y1="19" x2="40" y2="46" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="30" x2="24" y2="40" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="30" x2="56" y2="40" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="46" x2="32" y2="62" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="46" x2="48" y2="62" stroke="#00C853" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+  { id:7, name:"แอ่นหลัง", muscle:"หลังล่าง", dur:35, hr:[75,98], col:"#FF4081", fixes:"ปวดหลังล่าง/กระเบนเหน็บ",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="12" r="8" fill="none" stroke="#FF4081" strokeWidth="2.5"/><path d="M40 20 Q48 30 54 38 Q58 44 52 48 Q46 52 40 52 Q34 52 28 48 Q22 44 26 38 Q32 30 40 20" fill="none" stroke="#FF4081" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="52" x2="30" y2="70" stroke="#FF4081" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="52" x2="50" y2="70" stroke="#FF4081" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+  { id:8, name:"ยืดข้อมือ", muscle:"ข้อมือ/แขน", dur:25, hr:[65,82], col:"#FCF200", fixes:"ปวดข้อมือ/นิ้ว (Carpal)",
+    svg:<svg viewBox="0 0 80 80" width="44" height="44"><circle cx="40" cy="12" r="8" fill="none" stroke="#FCF200" strokeWidth="2.5"/><line x1="40" y1="20" x2="40" y2="46" stroke="#FCF200" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="32" x2="20" y2="38" stroke="#FCF200" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="32" x2="60" y2="28" stroke="#FCF200" strokeWidth="2.5" strokeLinecap="round"/><rect x="12" y="36" width="12" height="8" rx="3" fill="none" stroke="#FCF200" strokeWidth="2"/><line x1="40" y1="46" x2="30" y2="68" stroke="#FCF200" strokeWidth="2.5" strokeLinecap="round"/><line x1="40" y1="46" x2="50" y2="68" stroke="#FCF200" strokeWidth="2.5" strokeLinecap="round"/></svg> },
+];
+
+// ── Office Syndrome Risk Areas ──
+const riskAreas = [
+  { id:"neck", label:"คอ/ต้นคอ", icon:"🫁", pain:72, trend:-8, related:[0,1] },
+  { id:"shoulder", label:"ไหล่/บ่า", icon:"💪", pain:68, trend:-12, related:[1,2] },
+  { id:"back", label:"หลัง/เอว", icon:"🦴", pain:55, trend:-5, related:[3,4,6] },
+  { id:"wrist", label:"ข้อมือ/นิ้ว", icon:"🤚", pain:48, trend:-15, related:[2,7] },
+  { id:"eye", label:"สายตา", icon:"👁️", pain:61, trend:-3, related:[] },
+  { id:"leg", label:"ขา/เส้นเลือด", icon:"🦵", pain:34, trend:-20, related:[5] },
+];
+
+const HR_SERVICE = 0x180D;
+const HR_MEASUREMENT = 0x2A37;
+const BLE = { IDLE:"idle", SCANNING:"scanning", CONNECTING:"connecting", CONNECTED:"connected", ERROR:"error", UNSUPPORTED:"unsupported" };
+
+// ── Mini SVG icons ──
+const IcoHeart = ({s=16,c=C.red})=><svg width={s} height={s} viewBox="0 0 24 24" fill={c}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+const IcoWatch = ({s=16,c=C.teal})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2l-.5 4M15 2l.5 4M9 22l-.5-4M15 22l.5-4"/><circle cx="12" cy="12" r="2" fill={c}/></svg>;
+const IcoZap = ({s=15,c=C.yellow})=><svg width={s} height={s} viewBox="0 0 24 24" fill={c}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+const IcoActivity = ({s=15,c=C.teal})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+const IcoBT = ({s=20,c=C.blue})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/></svg>;
+const IcoCheck = ({s=14,c=C.green})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>;
+const IcoX = ({s=13,c=C.red})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+const IcoTrend = ({s=15,c=C.teal})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
+const IcoUsers = ({s=15,c=C.blue})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+const IcoShield = ({s=15,c=C.blue})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+const IcoBell = ({s=15,c=C.orange})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+const IcoEye = ({s=15,c=C.purple})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+const IcoBrain = ({s=15,c=C.pink})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-1.98-3 2.5 2.5 0 0 1-1.32-4.24 3 3 0 0 1 .34-5.58 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 1.98-3 2.5 2.5 0 0 0 1.32-4.24 3 3 0 0 0-.34-5.58 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/></svg>;
+const IcoSleep = ({s=15,c="#99FFFF"})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
+
+function HeartLogo({size=34}) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40">
+      <defs><linearGradient id="hgl" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#E5002F"/><stop offset="100%" stopColor="#FCA91A"/></linearGradient></defs>
+      <path d="M20 34C20 34 4 24 4 13c0-5 4-9 9-9 3 0 6 2 7 4 1-2 4-4 7-4 5 0 9 4 9 9 0 11-16 21-16 21z" fill="url(#hgl)"/>
+      <polyline points="10,18 13,18 16,12 19,24 22,16 25,20 30,20" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function Ring({val,size=80,color=C.teal,label,sub}) {
+  const r=(size-12)/2, circ=2*Math.PI*r, fill=Math.min(val/100,1)*circ;
+  return (
+    <div style={{position:"relative",width:size,height:size}}>
+      <svg width={size} height={size}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={C.surf3} strokeWidth="6"/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="6" strokeDasharray={`${fill} ${circ}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}/>
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        {label&&<span style={{fontSize:size>70?18:14,fontWeight:700,color,fontFamily:"Arial"}}>{label}</span>}
+        {sub&&<span style={{fontSize:9,color:C.gray}}>{sub}</span>}
+      </div>
+    </div>
+  );
+}
+
+function PainBar({val,color}) {
+  return (
+    <div style={{background:C.surf3,borderRadius:4,height:6,flex:1}}>
+      <div style={{background:color,height:6,borderRadius:4,width:`${val}%`,transition:"width 0.8s"}}/>
+    </div>
+  );
+}
+
+const weekData = [
+  {d:"จ",s:6,c:3},{d:"อ",s:8,c:5},{d:"พ",s:4,c:2},{d:"พฤ",s:9,c:7},{d:"ศ",s:7,c:4},{d:"ส",s:3,c:1},{d:"อา",s:0,c:0}
+];
+
+export default function HeartStretch() {
+  const [tab, setTab] = useState("home");
+  const [bleState, setBleState] = useState(BLE.IDLE);
+  const [bleError, setBleError] = useState("");
+  const [deviceName, setDeviceName] = useState("");
+  const [heartRate, setHR] = useState(null);
+  const [hrHist, setHRHist] = useState([72,75,73,78,80,77,74,76,79,82]);
+  const [battery, setBattery] = useState(null);
+  const [spo2, setSpo2] = useState(98);
+  const [hrv, setHRV] = useState(68);
+  const [stress, setStress] = useState(32);
+  const [simHR, setSimHR] = useState(74);
+  const [sittingMin, setSittingMin] = useState(0);
+  const [sittingAlert, setSittingAlert] = useState(false);
+  const [mode, setMode] = useState("select");
+  const [curEx, setCurEx] = useState(0);
+  const [selEx, setSelEx] = useState([]);
+  const [timer, setTimer] = useState(0);
+  const [score, setScore] = useState(0);
+  const [calories, setCalories] = useState(0);
+  const [poseS, setPoseS] = useState(0);
+  const [moveS, setMoveS] = useState(0);
+  const [exDone, setExDone] = useState(false);
+  const [totalS, setTotalS] = useState(0);
+  const [totalCal, setTotalCal] = useState(0);
+  const [painLog, setPainLog] = useState({neck:72,shoulder:68,back:55,wrist:48,eye:61,leg:34});
+  const [eyeTimer, setEyeTimer] = useState(0);
+  const [eyeActive, setEyeActive] = useState(false);
+  const [waterCount, setWaterCount] = useState(3);
+  const [postureScore, setPostureScore] = useState(78);
+  const [sleepH, setSleepH] = useState(6.5);
+  const [stepsToday, setStepsToday] = useState(3240);
+  const [notifications, setNotifications] = useState([
+    {id:1,type:"stretch",msg:"นั่งนิ่ง 45 นาที — ยืดเส้นด่วน!",time:"14:32",read:false,color:C.red},
+    {id:2,type:"water",msg:"ดื่มน้ำตามเวลา — ช่วยลดอาการปวดหัว",time:"14:00",read:false,color:C.blue},
+    {id:3,type:"eye",msg:"พักสายตา 20-20-20 Rule ได้เวลาแล้ว",time:"13:40",read:true,color:C.purple},
+    {id:4,type:"posture",msg:"AI ตรวจพบท่านั่งไม่ถูกต้อง แก้ไขด่วน!",time:"13:10",read:true,color:C.orange},
+  ]);
+
+  const deviceRef = useRef(null);
+  const gameRef = useRef(null);
+  const sittingRef = useRef(null);
+  const simRef = useRef(null);
+  const eyeRef = useRef(null);
+
+  const isConn = bleState === BLE.CONNECTED;
+  const dHR = heartRate ?? simHR;
+  const unread = notifications.filter(n=>!n.read).length;
+
+  // Simulate sensors
+  useEffect(() => {
+    simRef.current = setInterval(() => {
+      setSimHR(h=>Math.max(60,Math.min(130,h+(Math.random()*6-3)+(mode==="active"?1:-0.3))));
+      setSpo2(v=>Math.max(95,Math.min(100,v+(Math.random()>0.85?-1:0))));
+      setHRV(v=>Math.max(40,Math.min(90,v+(Math.random()*4-2))));
+      setStress(v=>Math.max(10,Math.min(90,v+(Math.random()*6-3))));
+      setPostureScore(v=>Math.max(40,Math.min(100,v+(Math.random()*4-2))));
+      setStepsToday(s=>s+(mode==="active"?Math.floor(Math.random()*3):0));
+    }, 1500);
+    return ()=>clearInterval(simRef.current);
+  }, [mode]);
+
+  useEffect(()=>{setHRHist(h=>[...h.slice(-19),dHR]);},[dHR]);
+
+  useEffect(()=>{
+    if (isConn && mode!=="active") {
+      sittingRef.current = setInterval(()=>{setSittingMin(m=>{const n=m+1/60;if(n>=45)setSittingAlert(true);return n;});},1000);
+    }
+    return()=>clearInterval(sittingRef.current);
+  },[isConn,mode]);
+
+  const parseHR = useCallback((e)=>{const v=e.target.value,f=v.getUint8(0);setHR((f&0x1)?v.getUint16(1,true):v.getUint8(1));},[]);
+
+  const connectBLE = async()=>{
+    if(!navigator.bluetooth){setBleState(BLE.UNSUPPORTED);setBleError("ใช้ Chrome/Edge บน Desktop หรือ Android");return;}
+    try{
+      setBleState(BLE.SCANNING);setBleError("");
+      const dev=await navigator.bluetooth.requestDevice({filters:[{services:[HR_SERVICE]}],optionalServices:[0x180F,0x1800]});
+      deviceRef.current=dev;setDeviceName(dev.name||"Smart Watch");setBleState(BLE.CONNECTING);
+      dev.addEventListener("gattserverdisconnected",()=>{setBleState(BLE.IDLE);setHR(null);setDeviceName("");});
+      const srv=await dev.gatt.connect();
+      const hrsvc=await srv.getPrimaryService(HR_SERVICE);
+      const hrch=await hrsvc.getCharacteristic(HR_MEASUREMENT);
+      await hrch.startNotifications();hrch.addEventListener("characteristicvaluechanged",parseHR);
+      try{const b=await(await(await srv.getPrimaryService(0x180F)).getCharacteristic(0x2A19)).readValue();setBattery(b.getUint8(0));}catch(_){}
+      setBleState(BLE.CONNECTED);setSittingMin(0);
+    }catch(err){if(err.name==="NotFoundError")setBleState(BLE.IDLE);else{setBleState(BLE.ERROR);setBleError(err.message||"เชื่อมต่อไม่สำเร็จ");}}
+  };
+
+  const disconnectBLE=()=>{
+    if(deviceRef.current?.gatt?.connected)deviceRef.current.gatt.disconnect();
+    setBleState(BLE.IDLE);setHR(null);setDeviceName("");setBattery(null);
+  };
+
+  useEffect(()=>{
+    if(mode==="active"){
+      const ex=selEx[curEx];setTimer(ex.dur);setExDone(false);clearInterval(gameRef.current);
+      gameRef.current=setInterval(()=>{
+        setTimer(t=>{
+          if(t<=1){clearInterval(gameRef.current);setExDone(true);setTotalS(s=>s+1);const cal=Math.round(Math.random()*5+8);setCalories(c=>c+cal);setTotalCal(c=>c+cal);setSittingMin(0);setSittingAlert(false);
+            setPainLog(p=>({...p,[selEx[curEx].id===1?"neck":selEx[curEx].id===2?"shoulder":selEx[curEx].id<=4?"back":selEx[curEx].id===8?"wrist":"leg"]:Math.max(0,p[selEx[curEx].id===1?"neck":selEx[curEx].id===2?"shoulder":selEx[curEx].id<=4?"back":selEx[curEx].id===8?"wrist":"leg"]-2)}));
+            return 0;}
+          setPoseS(Math.min(100,Math.round(60+Math.random()*40)));
+          setMoveS(Math.min(100,Math.round(55+Math.random()*45)));
+          setScore(s=>Math.min(100,s+0.3));return t-1;
+        });
+      },1000);
+    }
+    return()=>clearInterval(gameRef.current);
+  },[mode,curEx]);
+
+  // Eye rest 20-20-20
+  const startEyeRest = ()=>{
+    setEyeActive(true);setEyeTimer(20);
+    eyeRef.current=setInterval(()=>{setEyeTimer(t=>{if(t<=1){clearInterval(eyeRef.current);setEyeActive(false);return 0;}return t-1;});},1000);
+  };
+
+  const startFull=()=>{setSelEx(exercises);setScore(0);setCalories(0);setPoseS(0);setMoveS(0);setExDone(false);setCurEx(0);setMode("active");setSittingAlert(false);};
+  const startOne=(i)=>{setSelEx([exercises[i]]);setScore(0);setCalories(0);setPoseS(0);setMoveS(0);setExDone(false);setCurEx(0);setMode("active");setSittingAlert(false);};
+  const nextEx=()=>{if(curEx<selEx.length-1){setCurEx(c=>c+1);setExDone(false);setScore(0);setPoseS(0);setMoveS(0);}else{setMode("done");}};
+
+  const ex=selEx[curEx]||exercises[0];
+  const hrInZone=dHR>=ex.hr[0]&&dHR<=ex.hr[1];
+  const tScore=Math.round(poseS*0.4+moveS*0.25+(hrInZone?100:50)*0.2+(timer===0?100:((ex.dur-timer)/ex.dur)*100)*0.15);
+  const hrMax=Math.max(...hrHist,1);
+
+  const TABS = [
+    {id:"home",label:"หน้าหลัก",icon:<IcoActivity s={14} c="inherit"/>},
+    {id:"health",label:"สุขภาพ",icon:<IcoHeart s={14} c="inherit"/>},
+    {id:"workout",label:"Workout",icon:<IcoZap s={14} c="inherit"/>},
+    {id:"connect",label:"Watch",icon:<IcoWatch s={14} c="inherit"/>},
+    {id:"social",label:"Social",icon:<IcoUsers s={14} c="inherit"/>},
+  ];
+
+  const Card=({children,style={}})=>(
+    <div style={{background:C.surf,border:"1px solid #2A2A2C",borderRadius:16,padding:20,...style}}>{children}</div>
+  );
+
+  const SectionTitle=({icon,title,sub,action})=>(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        {icon}
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:C.white}}>{title}</div>
+          {sub&&<div style={{fontSize:11,color:C.gray}}>{sub}</div>}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+
+  return (
+    <div style={{background:C.bg,minHeight:"100vh",fontFamily:"Arial,sans-serif",color:C.white}}>
+      <style>{`
+        @keyframes pulse{0%,100%{transform:scale(1);opacity:0.4}50%{transform:scale(1.8);opacity:0}}
+        @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes glow{0%,100%{box-shadow:0 0 8px #E5002F44}50%{box-shadow:0 0 28px #E5002F88}}
+        .card:hover{border-color:#E5002F40!important;transition:border-color 0.2s;}
+        .ex-card{transition:all 0.18s;cursor:pointer;}
+        .ex-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,0.5);}
+        .btn{transition:all 0.15s;cursor:pointer;}
+        .btn:hover{opacity:0.85;transform:translateY(-1px);}
+        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:#131314;} ::-webkit-scrollbar-thumb{background:#333;}
+      `}</style>
+
+      {/* ── HEADER ── */}
+      <div style={{background:"linear-gradient(180deg,#110008,#0A0005)",borderBottom:"1px solid #2A0A10",position:"sticky",top:0,zIndex:50}}>
+        <div style={{maxWidth:1060,margin:"0 auto",padding:"0 22px"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",height:58}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <HeartLogo size={36}/>
+              <div>
+                <div style={{display:"flex",alignItems:"baseline",gap:1}}>
+                  <span style={{...gRed,fontSize:20,fontWeight:900}}>Heart</span>
+                  <span style={{color:C.white,fontSize:20,fontWeight:900}}>Stretch</span>
+                  <span style={{fontSize:10,color:"#9A4060",marginLeft:6,letterSpacing:1,fontWeight:600}}>OFFICE CARE</span>
+                </div>
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              {/* HR live */}
+              <div style={{display:"flex",alignItems:"center",gap:6,background:isConn?"#200008":"#1A1A1A",border:`1px solid ${isConn?"#E5002F50":"#333"}`,borderRadius:22,padding:"5px 14px"}}>
+                <div style={{animation:"beat 1s infinite",display:"flex"}}><IcoHeart s={14}/></div>
+                <span style={{fontSize:16,fontWeight:700,color:C.red}}>{Math.round(dHR)}</span>
+                <span style={{fontSize:10,color:C.gray}}>bpm</span>
+                <div style={{width:1,height:12,background:"#333"}}/>
+                <span style={{fontSize:10,fontWeight:600,color:isConn?C.teal:C.gray}}>{isConn?"LIVE":"SIM"}</span>
+              </div>
+              {/* notification bell */}
+              <div className="btn" onClick={()=>setTab("health")} style={{position:"relative",background:C.surf,border:"1px solid #333",borderRadius:"50%",width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <IcoBell s={16}/>
+                {unread>0&&<div style={{position:"absolute",top:4,right:4,width:8,height:8,borderRadius:"50%",background:C.red}}/>}
+              </div>
+              {/* connect btn */}
+              <button className="btn" onClick={()=>setTab("connect")}
+                style={{display:"flex",alignItems:"center",gap:6,background:isConn?"#200008":"linear-gradient(90deg,#E5002F,#FCA91A)",border:isConn?"1px solid #E5002F":"none",color:isConn?C.red:"#fff",borderRadius:22,padding:"7px 16px",fontSize:12,fontWeight:700}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:isConn?C.teal:bleState===BLE.SCANNING?C.orange:"#fff",animation:isConn?"pulse 1.4s infinite":"none"}}/>
+                {isConn?deviceName:bleState===BLE.SCANNING?"สแกน...":bleState===BLE.CONNECTING?"เชื่อมต่อ...":"Connect Watch"}
+              </button>
+            </div>
+          </div>
+          {/* Tabs */}
+          <div style={{display:"flex",gap:0}}>
+            {TABS.map(t=>(
+              <button key={t.id} className="btn" onClick={()=>{setTab(t.id);if(t.id==="workout")setMode("select");}}
+                style={{display:"flex",alignItems:"center",gap:5,background:"transparent",border:"none",borderBottom:tab===t.id?"2px solid #E5002F":"2px solid transparent",color:tab===t.id?C.white:C.gray,padding:"9px 16px",fontSize:12,fontWeight:tab===t.id?700:400}}>
+                <span style={{color:tab===t.id?C.red:C.gray}}>{t.icon}</span>{t.label}
+              </button>
+            ))}
+            <div style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center",paddingBottom:4}}>
+              <div style={{background:"#200008",border:"1px solid #E5002F30",borderRadius:16,padding:"3px 10px",fontSize:11,color:C.red,fontWeight:700}}>🔥 {totalS} ท่า</div>
+              <div style={{background:"#1A0D00",border:`1px solid ${C.orange}30`,borderRadius:16,padding:"3px 10px",fontSize:11,color:C.orange,fontWeight:700}}>🔥 {totalCal} kcal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sitting alert banner */}
+      {sittingAlert&&isConn&&(
+        <div style={{background:"linear-gradient(90deg,#200A00,#2A1000)",borderBottom:`1px solid ${C.orange}`,padding:"9px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",animation:"fadeIn 0.3s"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <IcoZap s={18} c={C.orange}/>
+            <span style={{fontSize:13,fontWeight:700,color:C.orange}}>นั่งนิ่ง {Math.floor(sittingMin)} นาที — ⌚ Watch ตรวจพบ! ควรยืดเส้นเพื่อป้องกัน Office Syndrome</span>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button className="btn" onClick={()=>setSittingAlert(false)} style={{background:"transparent",color:C.gray,border:"1px solid #333",borderRadius:7,padding:"4px 12px",fontSize:11}}>ข้าม</button>
+            <button className="btn" onClick={()=>{setTab("workout");startFull();}} style={{background:gBrand,color:"#000",border:"none",borderRadius:7,padding:"4px 14px",fontSize:11,fontWeight:700}}>ยืดเลย!</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── BODY ── */}
+      <div style={{maxWidth:1060,margin:"0 auto",padding:"22px 22px 60px"}}>
+
+        {/* ═══ HOME TAB ═══ */}
+        {tab==="home"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:18,animation:"slideUp 0.3s"}}>
+            {/* Hero greeting */}
+            <div style={{background:"linear-gradient(135deg,#1A0008,#200010,#0A0005)",border:"1px solid #3A0A18",borderRadius:20,padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:13,color:"#9A6070",marginBottom:4}}>สวัสดีตอนบ่าย • วันอังคาร 27 ม.ค. 2026</div>
+                <div style={{fontSize:26,fontWeight:800,...gRed,marginBottom:6}}>ร่างกายพร้อมรับมือออฟฟิศไหม?</div>
+                <div style={{fontSize:13,color:C.lgray,maxWidth:420,lineHeight:1.6}}>
+                  วันนี้คุณนั่งมาแล้ว <span style={{color:C.orange,fontWeight:700}}>{Math.floor(sittingMin)} นาที</span> ·
+                  ยืดเส้นแล้ว <span style={{color:C.teal,fontWeight:700}}>{totalS} ครั้ง</span> ·
+                  Risk Score <span style={{color:postureScore>70?C.teal:C.red,fontWeight:700}}>{Math.round(postureScore)}%</span>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:16,flexShrink:0}}>
+                <Ring val={Math.round(postureScore)} size={86} color={postureScore>70?C.teal:C.orange} label={Math.round(postureScore)} sub="Posture"/>
+                <Ring val={Math.round(100-stress)} size={86} color={stress<50?C.green:C.red} label={Math.round(100-stress)} sub="Wellness"/>
+              </div>
+            </div>
+
+            {/* Quick stats row */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
+              {[
+                {icon:<IcoHeart s={18}/>,label:"Heart Rate",val:Math.round(dHR),unit:"bpm",color:C.red,bg:"#1A0510"},
+                {icon:<IcoActivity s={18} c={C.teal}/>,label:"SpO2",val:Math.round(spo2),unit:"%",color:C.teal,bg:"#051514"},
+                {icon:<IcoShield s={18} c={C.blue}/>,label:"HRV",val:Math.round(hrv),unit:"ms",color:C.blue,bg:"#050F20"},
+                {icon:<IcoBrain s={18} c={C.pink}/>,label:"ความเครียด",val:Math.round(stress),unit:"%",color:stress<50?C.green:stress<70?C.orange:C.red,bg:"#150510"},
+                {icon:<IcoSleep s={18}/>,label:"ก้าวเดินวันนี้",val:stepsToday.toLocaleString(),unit:"ก้าว",color:"#99FFFF",bg:"#051520"},
+              ].map((m,i)=>(
+                <div key={i} style={{background:m.bg,border:`1px solid ${m.color}25`,borderRadius:14,padding:"16px 14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:10,color:C.gray,fontWeight:600}}>{m.label}</span>{m.icon}</div>
+                  <div style={{fontSize:28,fontWeight:700,color:m.color,lineHeight:1,whiteSpace:"nowrap"}}>{m.val}<span style={{fontSize:11,color:C.gray,marginLeft:3}}>{m.unit}</span></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Office Syndrome Risk + Quick actions */}
+            <div style={{display:"grid",gridTemplateColumns:"1.2fr 0.8fr",gap:16}}>
+              <Card>
+                <SectionTitle icon={<IcoShield s={15} c={C.red}/>} title="Office Syndrome Risk Map" sub="วิเคราะห์จาก Sensor + การใช้งานวันนี้"/>
+                {riskAreas.map((r,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:i<riskAreas.length-1?"1px solid #1E1E1E":"none"}}>
+                    <span style={{fontSize:18,width:26}}>{r.icon}</span>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                        <span style={{fontSize:12,color:C.white,fontWeight:600}}>{r.label}</span>
+                        <span style={{fontSize:12,fontWeight:700,color:r.pain>70?C.red:r.pain>50?C.orange:C.teal}}>{r.pain}%</span>
+                      </div>
+                      <PainBar val={r.pain} color={r.pain>70?C.red:r.pain>50?C.orange:C.teal}/>
+                    </div>
+                    <span style={{fontSize:11,fontWeight:700,color:r.trend<0?C.green:C.red,width:36,textAlign:"right"}}>{r.trend}%</span>
+                  </div>
+                ))}
+              </Card>
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                {/* Quick stretch */}
+                <div style={{background:"linear-gradient(135deg,#1A0008,#200010)",border:"1px solid #3A0A18",borderRadius:16,padding:18,flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:C.red,marginBottom:12}}>⚡ Quick Stretch</div>
+                  {exercises.slice(0,4).map((e,i)=>(
+                    <div key={i} className="btn" onClick={()=>{setTab("workout");startOne(i);}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 10px",borderRadius:9,marginBottom:4,background:"#1A0010",border:`1px solid ${e.col}25`,cursor:"pointer"}}>
+                      <div style={{flexShrink:0}}>{e.svg&&<svg viewBox="0 0 80 80" width="24" height="24">{e.svg.props.children}</svg>}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,fontWeight:600,color:e.col}}>{e.name}</div>
+                        <div style={{fontSize:10,color:C.gray}}>{e.fixes}</div>
+                      </div>
+                      <span style={{fontSize:11,color:C.gray}}>{e.dur}s</span>
+                    </div>
+                  ))}
+                </div>
+                {/* Eye & Water */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div className="btn" onClick={startEyeRest} style={{background:eyeActive?"#0D0524":"#100A20",border:`1px solid ${C.purple}40`,borderRadius:12,padding:14,cursor:"pointer",textAlign:"center"}}>
+                    <IcoEye s={22} c={C.purple}/>
+                    <div style={{fontSize:12,fontWeight:700,color:C.purple,marginTop:6}}>{eyeActive?`${eyeTimer}s`:"พักตา"}</div>
+                    <div style={{fontSize:10,color:C.gray}}>20-20-20</div>
+                  </div>
+                  <div className="btn" onClick={()=>setWaterCount(w=>Math.min(8,w+1))} style={{background:"#050F20",border:`1px solid ${C.blue}40`,borderRadius:12,padding:14,cursor:"pointer",textAlign:"center"}}>
+                    <div style={{fontSize:22}}>💧</div>
+                    <div style={{fontSize:12,fontWeight:700,color:C.blue,marginTop:6}}>{waterCount}/8</div>
+                    <div style={{fontSize:10,color:C.gray}}>แก้วน้ำวันนี้</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Today timeline */}
+            <Card>
+              <SectionTitle icon={<IcoTrend s={15}/>} title="กิจกรรมวันนี้" sub="Timeline สุขภาพ"/>
+              <div style={{display:"flex",gap:0,position:"relative"}}>
+                <div style={{position:"absolute",top:16,left:16,right:16,height:2,background:C.surf3}}/>
+                {[
+                  {time:"09:00",act:"เริ่มงาน",icon:"💻",done:true,color:C.blue},
+                  {time:"10:30",act:"ยืดเส้น",icon:"🤸",done:true,color:C.teal},
+                  {time:"12:00",act:"พักเที่ยง",icon:"🍱",done:true,color:C.green},
+                  {time:"14:00",act:"ดื่มน้ำ",icon:"💧",done:true,color:C.blue},
+                  {time:"14:32",act:"ยืดเส้น",icon:"🔔",done:false,color:C.red},
+                  {time:"16:00",act:"พักตา",icon:"👁️",done:false,color:C.purple},
+                  {time:"17:00",act:"เลิกงาน",icon:"🏠",done:false,color:C.gray},
+                ].map((t,i)=>(
+                  <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:t.done?t.color:C.surf3,border:`2px solid ${t.done?t.color:C.surf3}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,zIndex:1}}>
+                      {t.done?t.icon:<span style={{fontSize:12}}>{t.icon}</span>}
+                    </div>
+                    <div style={{fontSize:10,color:t.done?C.white:C.gray,textAlign:"center"}}>{t.act}</div>
+                    <div style={{fontSize:9,color:C.gray}}>{t.time}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ═══ HEALTH TAB ═══ */}
+        {tab==="health"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:18,animation:"slideUp 0.3s"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+              {/* HR + History */}
+              <Card>
+                <SectionTitle icon={<IcoHeart s={15}/>} title="Heart Rate Monitor" sub={isConn?"Live จากนาฬิกา":"Simulated"}/>
+                <div style={{display:"flex",alignItems:"flex-end",gap:10,marginBottom:16}}>
+                  <div style={{fontSize:60,fontWeight:800,...gRed,lineHeight:1,animation:"beat 1s infinite"}}>{Math.round(dHR)}</div>
+                  <div style={{paddingBottom:8}}>
+                    <div style={{fontSize:14,color:C.gray}}>bpm</div>
+                    <div style={{fontSize:12,fontWeight:600,color:dHR<80?C.teal:dHR<100?C.green:dHR<120?C.orange:C.red}}>{dHR<80?"พักผ่อน":dHR<100?"เบาบาง":dHR<120?"ออกกำลัง":"หนัก"}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",alignItems:"flex-end",gap:2,height:48,background:"#1A0010",borderRadius:10,padding:"8px 12px",marginBottom:12}}>
+                  {hrHist.slice(-18).map((v,i,a)=>(
+                    <div key={i} style={{flex:1,background:i===a.length-1?C.red:`${C.red}${Math.round(25+i*(80/a.length)).toString(16).padStart(2,"0")}`,borderRadius:2,height:`${(v/hrMax)*100}%`,minHeight:2,transition:"height 0.4s"}}/>
+                  ))}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                  {[{l:"HRV",v:`${Math.round(hrv)}ms`,c:C.blue},{l:"SpO2",v:`${Math.round(spo2)}%`,c:C.teal},{l:"Stress",v:`${Math.round(stress)}%`,c:stress<50?C.green:C.orange}].map((s,i)=>(
+                    <div key={i} style={{background:C.surf2,borderRadius:9,padding:"10px",textAlign:"center"}}>
+                      <div style={{fontSize:18,fontWeight:700,color:s.c}}>{s.v}</div>
+                      <div style={{fontSize:10,color:C.gray}}>{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Office Syndrome Tracker */}
+              <Card>
+                <SectionTitle icon={<IcoShield s={15} c={C.orange}/>} title="Office Syndrome Tracker" sub="บันทึกอาการรายวัน"/>
+                {riskAreas.map((r,i)=>(
+                  <div key={i} style={{marginBottom:10}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                      <span style={{fontSize:12,display:"flex",alignItems:"center",gap:6}}>{r.icon}<span style={{color:C.white}}>{r.label}</span></span>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:12,fontWeight:700,color:r.pain>70?C.red:r.pain>50?C.orange:C.teal}}>{painLog[r.id]??r.pain}%</span>
+                        <span style={{fontSize:10,color:C.green}}>▼ {Math.abs(r.trend)}%</span>
+                      </div>
+                    </div>
+                    <PainBar val={painLog[r.id]??r.pain} color={r.pain>70?C.red:r.pain>50?C.orange:C.teal}/>
+                  </div>
+                ))}
+                <div style={{marginTop:14,background:"#051A0F",border:`1px solid ${C.green}30`,borderRadius:10,padding:"10px 14px",fontSize:12,color:C.green}}>
+                  ✅ ยืดเส้น {totalS} ครั้งช่วยลดอาการโดยรวม {Math.min(totalS*2,30)}%
+                </div>
+              </Card>
+            </div>
+
+            {/* Weekly chart + Sleep + Water */}
+            <div style={{display:"grid",gridTemplateColumns:"1.5fr 0.5fr 0.5fr 0.5fr",gap:14}}>
+              <Card>
+                <SectionTitle icon={<IcoTrend s={15}/>} title="สถิติประจำสัปดาห์" sub="20–26 ม.ค. 2026"/>
+                <div style={{display:"flex",gap:10,alignItems:"flex-end",height:80,marginBottom:8}}>
+                  {weekData.map((d,i)=>(
+                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <div style={{width:"100%",background:C.surf3,borderRadius:"4px 4px 0 0",height:70,display:"flex",flexDirection:"column",justifyContent:"flex-end",overflow:"hidden"}}>
+                        <div style={{background:C.blue,width:"100%",height:`${(d.s/10)*100}%`,opacity:0.7,transition:"height 0.6s"}}/>
+                        <div style={{background:C.red,width:"100%",height:`${(d.c/10)*100}%`,transition:"height 0.6s"}}/>
+                      </div>
+                      <div style={{fontSize:10,color:C.gray}}>{d.d}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:"flex",gap:16,fontSize:11,color:C.gray}}>
+                  <span style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:C.blue,opacity:0.7}}/> ยืดเส้น</span>
+                  <span style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:C.red}}/> แคลอรี่×10</span>
+                </div>
+              </Card>
+              {/* Sleep */}
+              <div style={{background:"#050F20",border:`1px solid #99FFFF30`,borderRadius:16,padding:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
+                <IcoSleep s={28} c="#99FFFF"/>
+                <div style={{fontSize:28,fontWeight:700,color:"#99FFFF",whiteSpace:"nowrap"}}>{sleepH}<span style={{fontSize:12,color:C.gray}}>ชม.</span></div>
+                <div style={{fontSize:11,color:C.gray,textAlign:"center"}}>การนอนหลับ<br/>คืนล่าสุด</div>
+                <div style={{fontSize:11,color:sleepH>=7?C.green:sleepH>=6?C.orange:C.red,fontWeight:700}}>{sleepH>=7?"ดี":sleepH>=6?"พอดี":"ไม่เพียงพอ"}</div>
+              </div>
+              {/* Water */}
+              <div className="btn" onClick={()=>setWaterCount(w=>Math.min(8,w+1))} style={{background:"#050A20",border:`1px solid ${C.blue}30`,borderRadius:16,padding:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8,cursor:"pointer"}}>
+                <div style={{fontSize:28}}>💧</div>
+                <div style={{fontSize:28,fontWeight:700,color:C.blue,whiteSpace:"nowrap"}}>{waterCount}<span style={{fontSize:12,color:C.gray}}>/8</span></div>
+                <div style={{fontSize:11,color:C.gray,textAlign:"center"}}>ดื่มน้ำวันนี้<br/>กดเพื่อเพิ่ม</div>
+                <div style={{background:C.surf3,borderRadius:4,height:5,width:"100%"}}><div style={{background:C.blue,height:5,borderRadius:4,width:`${(waterCount/8)*100}%`,transition:"width 0.4s"}}/></div>
+              </div>
+              {/* Steps */}
+              <div style={{background:"#051510",border:`1px solid ${C.green}30`,borderRadius:16,padding:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8}}>
+                <div style={{fontSize:28}}>👟</div>
+                <div style={{fontSize:24,fontWeight:700,color:C.green,whiteSpace:"nowrap"}}>{stepsToday.toLocaleString()}</div>
+                <div style={{fontSize:11,color:C.gray,textAlign:"center"}}>ก้าวเดิน<br/>วันนี้</div>
+                <div style={{background:C.surf3,borderRadius:4,height:5,width:"100%"}}><div style={{background:C.green,height:5,borderRadius:4,width:`${Math.min(100,(stepsToday/8000)*100)}%`,transition:"width 0.8s"}}/></div>
+                <div style={{fontSize:10,color:C.gray}}>เป้า 8,000 ก้าว</div>
+              </div>
+            </div>
+
+            {/* Notifications */}
+            <Card>
+              <SectionTitle icon={<IcoBell s={15} c={C.orange}/>} title="การแจ้งเตือน HeartStretch" sub={`${unread} รายการยังไม่อ่าน`}
+                action={<button className="btn" onClick={()=>setNotifications(n=>n.map(x=>({...x,read:true})))} style={{fontSize:11,color:C.teal,background:"transparent",border:"none",cursor:"pointer"}}>อ่านทั้งหมด</button>}/>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {notifications.map((n,i)=>(
+                  <div key={i} className="btn" onClick={()=>setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,read:true}:x))}
+                    style={{display:"flex",alignItems:"center",gap:12,background:n.read?C.surf2:`${n.color}12`,border:`1px solid ${n.read?"#2A2A2C":n.color+"40"}`,borderRadius:12,padding:"12px 16px",opacity:n.read?0.6:1,cursor:"pointer"}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:n.read?"transparent":n.color,flexShrink:0}}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,color:n.read?C.gray:C.white,fontWeight:n.read?400:600}}>{n.msg}</div>
+                    </div>
+                    <div style={{fontSize:11,color:C.gray,whiteSpace:"nowrap"}}>{n.time}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ═══ WORKOUT TAB ═══ */}
+        {tab==="workout"&&(
+          <div style={{animation:"slideUp 0.3s"}}>
+            {mode==="select"&&(
+              <div>
+                <div style={{textAlign:"center",marginBottom:24}}>
+                  <div style={{fontSize:26,fontWeight:800,...gRed}}>8 ท่ายืดเส้น — ป้องกัน Office Syndrome</div>
+                  <div style={{fontSize:13,color:"#9A6070",marginTop:5}}>
+                    {isConn?`⌚ ${deviceName} · HR: ${Math.round(dHR)} bpm · Live`:"Demo · เชื่อมต่อ Watch เพื่อรับ HR จริง"}
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:13,marginBottom:24}}>
+                  {exercises.map((e,i)=>(
+                    <div key={i} className="ex-card" onClick={()=>startOne(i)}
+                      style={{background:C.surf,border:`1px solid ${e.col}30`,borderRadius:16,padding:"18px 14px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:e.col,borderRadius:"16px 16px 0 0"}}/>
+                      <div style={{marginBottom:8}}>{e.svg}</div>
+                      <div style={{fontSize:14,fontWeight:700,marginBottom:3}}>{e.name}</div>
+                      <div style={{fontSize:10,color:C.gray,marginBottom:4}}>กล้ามเนื้อ{e.muscle}</div>
+                      <div style={{fontSize:10,color:e.col,marginBottom:10,fontWeight:600}}>✓ {e.fixes}</div>
+                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                        <span style={{background:`${e.col}18`,border:`1px solid ${e.col}40`,borderRadius:5,padding:"2px 6px",fontSize:9,color:e.col,fontWeight:600}}>HR {e.hr[0]}–{e.hr[1]}</span>
+                        <span style={{background:C.surf3,borderRadius:5,padding:"2px 6px",fontSize:9,color:C.white,fontWeight:600}}>{e.dur}s</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:"flex",justifyContent:"center",gap:14}}>
+                  <button className="btn" onClick={startFull}
+                    style={{background:gBrand,color:"#000",border:"none",borderRadius:14,padding:"15px 64px",fontSize:17,fontWeight:800}}>
+                    เริ่ม Full Workout · 8 ท่า
+                  </button>
+                  <button className="btn" onClick={()=>startOne(Math.floor(Math.random()*8))}
+                    style={{background:"transparent",color:C.white,border:"1px solid #3A0A18",borderRadius:14,padding:"15px 28px",fontSize:15,fontWeight:600}}>
+                    สุ่มท่า 🎲
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {mode==="active"&&(
+              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                {/* Stepper */}
+                <div style={{background:C.surf,border:"1px solid #2A2A2C",borderRadius:12,padding:"12px 18px",overflowX:"auto"}}>
+                  <div style={{display:"flex",alignItems:"center",minWidth:selEx.length*66}}>
+                    {selEx.map((e,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",flex:1}}>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                          <div style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,background:i<curEx?C.green:i===curEx?e.col:C.surf3,color:i<=curEx?"#000":C.gray,fontWeight:700}}>{i<curEx?"✓":i+1}</div>
+                          <div style={{fontSize:8,color:i===curEx?e.col:C.gray,whiteSpace:"nowrap",fontWeight:i===curEx?700:400}}>{e.name}</div>
+                        </div>
+                        {i<selEx.length-1&&<div style={{flex:1,height:2,background:i<curEx?C.green:C.surf3,margin:"0 3px",marginBottom:12}}/>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Header */}
+                <div style={{background:`linear-gradient(135deg,${ex.col}12,${ex.col}04)`,border:`1px solid ${ex.col}30`,borderRadius:16,padding:"16px 22px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{background:`${ex.col}18`,borderRadius:12,padding:10}}>{ex.svg}</div>
+                    <div>
+                      <div style={{fontSize:10,color:C.gray}}>ท่าที่ {curEx+1}/{selEx.length} · ป้องกัน: {ex.fixes}</div>
+                      <div style={{fontSize:22,fontWeight:700,color:ex.col}}>{ex.name}</div>
+                      <div style={{fontSize:11,color:C.gray}}>กล้ามเนื้อ{ex.muscle} · HR Zone {ex.hr[0]}–{ex.hr[1]}</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:20}}>
+                    {[{v:`${timer}s`,l:"เหลือ",c:timer>10?C.teal:C.orange},{v:Math.round(score),l:"Score",c:C.white},{v:calories,l:"kcal",c:C.orange}].map((s,i)=>(
+                      <div key={i} style={{textAlign:"center"}}>
+                        <div style={{fontSize:38,fontWeight:700,color:s.c,whiteSpace:"nowrap"}}>{s.v}</div>
+                        <div style={{fontSize:10,color:C.gray}}>{s.l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                  {/* Webcam */}
+                  <div style={{background:C.surf,border:"1px solid #2A2A2C",borderRadius:16,padding:16}}>
+                    <div style={{fontSize:11,fontWeight:700,color:C.gray,marginBottom:10,display:"flex",alignItems:"center",gap:5}}>
+                      <div style={{width:6,height:6,borderRadius:"50%",background:C.green,animation:"pulse 1.4s infinite"}}/>MediaPipe Pose Detection
+                    </div>
+                    <div style={{background:"#050508",borderRadius:10,height:150,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 80%,${ex.col}15 0%,#020204 70%)`}}/>
+                      <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}} viewBox="0 0 200 150">
+                        <circle cx="100" cy="32" r="12" fill="none" stroke={ex.col} strokeWidth="1.5" opacity="0.5"/>
+                        {[[100,44],[100,92],[75,80],[125,80],[84,132],[116,132]].slice(1).map(([x,y],i,a)=>(
+                          <line key={i} x1={i===0?100:i===1?100:i===2?100:i===3?100:100} y1={i===0?44:i===1?44:i===2?60:i===3?60:92} x2={x} y2={y} stroke={ex.col} strokeWidth="1.5" opacity="0.5"/>
+                        ))}
+                        {[[100,32],[75,80],[125,80],[84,132],[116,132]].map(([x,y],i)=>(
+                          <circle key={i} cx={x} cy={y} r="4" fill={ex.col} opacity="0.7"/>
+                        ))}
+                      </svg>
+                      <div style={{position:"relative",zIndex:1,textAlign:"center"}}>{ex.svg}<div style={{fontSize:10,color:ex.col,fontWeight:700,marginTop:3}}>Tracking</div></div>
+                    </div>
+                    <div style={{marginTop:10}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:C.gray}}>Pose (40%)</span><span style={{fontSize:11,fontWeight:700,color:ex.col}}>{poseS}%</span></div>
+                      <div style={{background:C.surf3,borderRadius:5,height:7}}><div style={{background:`linear-gradient(90deg,${ex.col},#FCA91A)`,height:7,borderRadius:5,width:`${poseS}%`,transition:"width 0.5s"}}/></div>
+                    </div>
+                  </div>
+                  {/* Watch */}
+                  <div style={{background:C.surf,border:`2px solid ${isConn?"#E5002F60":"#2A2A2C"}`,borderRadius:16,padding:16,...(isConn?{animation:"glow 2.5s infinite"}:{})}}>
+                    <div style={{fontSize:11,fontWeight:700,marginBottom:10,display:"flex",alignItems:"center",gap:5,color:isConn?C.red:C.gray}}>
+                      <IcoHeart s={13} c={isConn?C.red:C.gray}/>{isConn?`${deviceName} Live`:"Demo Mode"}
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                      {[
+                        {l:"Heart Rate",v:Math.round(dHR),u:"bpm",c:C.red,sub:hrInZone?"✅ In Zone":"⚡ Adjust",anim:true},
+                        {l:"Movement",v:Math.round(moveS),u:"%",c:C.blue,sub:moveS>70?"✅ Good":"⚡ More"},
+                        {l:"SpO2",v:Math.round(spo2),u:"%",c:C.teal,sub:"ออกซิเจน"},
+                        {l:"HRV",v:Math.round(hrv),u:"ms",c:C.purple,sub:hrv>60?"ผ่อนคลาย":"เครียด"},
+                      ].map((s,i)=>(
+                        <div key={i} style={{background:C.surf2,borderRadius:10,padding:"10px",textAlign:"center"}}>
+                          {s.anim&&<div style={{animation:"beat 1s infinite",display:"flex",justifyContent:"center",marginBottom:2}}><IcoHeart s={14}/></div>}
+                          <div style={{fontSize:22,fontWeight:700,color:s.c,whiteSpace:"nowrap"}}>{s.v}<span style={{fontSize:9,color:C.gray}}>{s.u}</span></div>
+                          <div style={{fontSize:9,color:C.gray}}>{s.l}</div>
+                          <div style={{fontSize:9,marginTop:1,color:String(s.sub).startsWith("✅")?C.green:C.orange}}>{s.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Score breakdown */}
+                <div style={{background:C.surf,border:"1px solid #2A2A2C",borderRadius:16,padding:"16px 20px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:700}}>HeartStretch Score</div>
+                    <div style={{fontSize:38,fontWeight:800,...gRed,whiteSpace:"nowrap"}}>{exDone?tScore:Math.round(score)}<span style={{fontSize:14,color:C.gray}}>/100</span></div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+                    {[{l:"ท่าทาง",w:"40%",v:poseS,c:C.teal},{l:"การเคลื่อนไหว",w:"25%",v:moveS,c:C.blue},{l:"Heart Rate",w:"20%",v:hrInZone?100:55,c:C.red},{l:"ครบเวลา",w:"15%",v:exDone?100:Math.round(((ex.dur-timer)/ex.dur)*100),c:C.yellow}].map((s,i)=>(
+                      <div key={i} style={{background:C.surf2,borderRadius:10,padding:"10px",textAlign:"center"}}>
+                        <div style={{fontSize:9,color:C.gray,marginBottom:1}}>{s.l}</div>
+                        <div style={{fontSize:10,fontWeight:700,color:s.c,marginBottom:7}}>{s.w}</div>
+                        <Ring val={s.v} size={62} color={s.c} label={s.v}/>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {exDone&&(
+                  <div style={{background:"linear-gradient(135deg,#1A0008,#200010)",border:"1px solid #E5002F60",borderRadius:14,padding:22,textAlign:"center",animation:"fadeIn 0.4s"}}>
+                    <div style={{fontSize:32,marginBottom:6}}>🎉</div>
+                    <div style={{fontSize:20,fontWeight:800,...gRed}}>ยอดเยี่ยม! {tScore}/100</div>
+                    <div style={{fontSize:12,color:"#9A6070",margin:"6px 0 16px"}}>{curEx<selEx.length-1?`ท่าถัดไป: ${selEx[curEx+1].name} — ป้องกัน ${selEx[curEx+1].fixes}`:"ครบทุกท่าแล้ว!"}</div>
+                    <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+                      <button className="btn" onClick={()=>{setMode("select");setScore(0);setCalories(0);}} style={{background:"transparent",color:C.gray,border:"1px solid #333",borderRadius:9,padding:"9px 20px",fontSize:12}}>กลับ</button>
+                      <button className="btn" onClick={nextEx} style={{background:gBrand,color:"#000",border:"none",borderRadius:9,padding:"9px 28px",fontSize:13,fontWeight:700}}>{curEx<selEx.length-1?"ท่าถัดไป →":"ดูสรุป"}</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mode==="done"&&(
+              <div style={{textAlign:"center",padding:"40px 20px",animation:"fadeIn 0.4s"}}>
+                <HeartLogo size={68}/>
+                <div style={{fontSize:28,fontWeight:800,...gRed,margin:"14px 0 6px"}}>Workout สำเร็จ!</div>
+                <div style={{fontSize:13,color:"#9A6070",marginBottom:28}}>ป้องกัน Office Syndrome ได้ {selEx.length} ท่าวันนี้</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,maxWidth:560,margin:"0 auto 28px"}}>
+                  {[{l:"ท่าที่ทำ",v:selEx.length,u:"ท่า",c:C.teal},{l:"แคลอรี่",v:calories,u:"kcal",c:C.orange},{l:"HeartScore",v:tScore,u:"pts",c:C.red},{l:"ลดความเสี่ยง",v:`${Math.min(30,totalS*3)}%`,u:"",c:C.green}].map((s,i)=>(
+                    <div key={i} style={{background:"linear-gradient(135deg,#1A0008,#200010)",border:"1px solid #3A0A18",borderRadius:14,padding:18}}>
+                      <div style={{fontSize:30,fontWeight:800,color:s.c,whiteSpace:"nowrap"}}>{s.v}<span style={{fontSize:12,color:C.gray,marginLeft:3}}>{s.u}</span></div>
+                      <div style={{fontSize:11,color:"#9A6070",marginTop:3}}>{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <button className="btn" onClick={()=>{setMode("select");setScore(0);setCalories(0);}} style={{background:gBrand,color:"#000",border:"none",borderRadius:13,padding:"14px 52px",fontSize:16,fontWeight:800}}>เล่นอีกครั้ง</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ CONNECT TAB ═══ */}
+        {tab==="connect"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:18,animation:"slideUp 0.3s"}}>
+            <div style={{background:"linear-gradient(135deg,#1A0008,#200010,#0A0005)",border:"1px solid #3A0A18",borderRadius:20,padding:"28px 28px",display:"flex",gap:32,alignItems:"center"}}>
+              {/* Watch mockup */}
+              <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:0}}>
+                <div style={{width:36,height:18,background:"#1A1A1A",borderRadius:"6px 6px 0 0",margin:"0 auto"}}/>
+                <div style={{width:124,height:142,background:"#080810",borderRadius:30,border:`2px solid ${isConn?"#E5002F":"#2A2A2A"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,padding:16,position:"relative",boxShadow:isConn?"0 0 40px #E5002F33":"0 0 20px #00000099",transition:"all 0.6s"}}>
+                  {isConn&&<div style={{position:"absolute",top:9,right:9,width:8,height:8,borderRadius:"50%",background:C.teal,animation:"pulse 1.4s infinite"}}/>}
+                  {isConn?(
+                    <>
+                      <HeartLogo size={26}/>
+                      <div style={{fontSize:26,fontWeight:700,color:C.red,animation:"beat 1s infinite",whiteSpace:"nowrap"}}>{Math.round(dHR)}</div>
+                      <div style={{fontSize:9,color:C.gray}}>bpm · LIVE</div>
+                      <div style={{width:"100%",height:1,background:"#222"}}/>
+                      <div style={{display:"flex",justifyContent:"space-around",width:"100%",fontSize:10}}>
+                        <div style={{textAlign:"center"}}><div style={{fontWeight:700,color:C.teal}}>{Math.round(spo2)}%</div><div style={{color:C.gray}}>SpO2</div></div>
+                        <div style={{textAlign:"center"}}><div style={{fontWeight:700,color:C.orange}}>{battery??"-"}</div><div style={{color:C.gray}}>bat%</div></div>
+                        <div style={{textAlign:"center"}}><div style={{fontWeight:700,color:C.blue}}>{totalS}</div><div style={{color:C.gray}}>ท่า</div></div>
+                      </div>
+                    </>
+                  ):(
+                    <div style={{opacity:bleState===BLE.SCANNING||bleState===BLE.CONNECTING?1:0.3,transition:"opacity 0.3s",textAlign:"center"}}>
+                      <IcoBT s={42} c={bleState===BLE.SCANNING?C.teal:C.blue}/>
+                      <div style={{fontSize:9,color:C.gray,marginTop:4}}>{bleState===BLE.SCANNING?"สแกน...":bleState===BLE.CONNECTING?"เชื่อมต่อ...":"พร้อมเชื่อมต่อ"}</div>
+                    </div>
+                  )}
+                </div>
+                <div style={{width:36,height:18,background:"#1A1A1A",borderRadius:"0 0 6px 6px",margin:"0 auto"}}/>
+              </div>
+              {/* Right info */}
+              <div style={{flex:1}}>
+                {isConn?(
+                  <>
+                    <div style={{fontSize:12,color:C.teal,fontWeight:700,display:"flex",alignItems:"center",gap:5,marginBottom:4}}><IcoCheck s={12}/>เชื่อมต่อสำเร็จ</div>
+                    <div style={{fontSize:24,fontWeight:700,marginBottom:3}}>{deviceName}</div>
+                    <div style={{fontSize:12,color:"#9A6070",marginBottom:16}}>Bluetooth LE · Heart Rate Service 0x180D · GATT</div>
+                    <div style={{display:"flex",alignItems:"flex-end",gap:8,height:36,background:"#200010",borderRadius:9,padding:"6px 10px",marginBottom:14}}>
+                      {hrHist.slice(-14).map((v,i,a)=>(
+                        <div key={i} style={{flex:1,background:i===a.length-1?C.red:`${C.red}${Math.round(20+i*(80/a.length)).toString(16).padStart(2,"0")}`,borderRadius:2,height:`${(v/hrMax)*100}%`,minHeight:2,transition:"height 0.4s"}}/>
+                      ))}
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14}}>
+                      {[{l:"HR",v:`${Math.round(dHR)} bpm`,c:C.red},{l:"SpO2",v:`${Math.round(spo2)}%`,c:C.teal},{l:"HRV",v:`${Math.round(hrv)}ms`,c:C.blue},{l:"Battery",v:battery!==null?`${battery}%`:"N/A",c:C.orange}].map((r,i)=>(
+                        <div key={i} style={{background:"#200010",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                          <div style={{fontSize:16,fontWeight:700,color:r.c}}>{r.v}</div>
+                          <div style={{fontSize:10,color:C.gray}}>{r.l}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{display:"flex",gap:10}}>
+                      <button className="btn" onClick={()=>{setTab("workout");}} style={{flex:1,background:gBrand,color:"#000",border:"none",borderRadius:11,padding:"11px",fontSize:14,fontWeight:700}}>เริ่ม Workout</button>
+                      <button className="btn" onClick={disconnectBLE} style={{background:"transparent",color:C.red,border:"1px solid #E5002F40",borderRadius:11,padding:"11px 18px",fontSize:12}}>ตัดการเชื่อมต่อ</button>
+                    </div>
+                  </>
+                ):(
+                  <>
+                    <div style={{fontSize:24,fontWeight:800,...gRed,marginBottom:8}}>เชื่อมต่อ Smart Watch</div>
+                    <div style={{fontSize:13,color:"#9A6070",marginBottom:20,lineHeight:1.7}}>HeartStretch ใช้ Web Bluetooth API รับข้อมูล Heart Rate, SpO2, HRV แบบ Real-time เพื่อวิเคราะห์และป้องกัน Office Syndrome ตรงจุด</div>
+                    {bleState===BLE.ERROR&&<div style={{background:"#200005",border:"1px solid #E5002F40",borderRadius:9,padding:"9px 12px",marginBottom:12,fontSize:12,color:C.red,display:"flex",alignItems:"center",gap:6}}><IcoX s={12}/>{bleError}</div>}
+                    {bleState===BLE.UNSUPPORTED&&<div style={{background:"#201000",border:`1px solid ${C.orange}40`,borderRadius:9,padding:"9px 12px",marginBottom:12,fontSize:12,color:C.orange}}>⚠️ ใช้ Chrome หรือ Edge บน Desktop/Android</div>}
+                    <button className="btn" onClick={connectBLE} disabled={bleState===BLE.SCANNING||bleState===BLE.CONNECTING}
+                      style={{display:"flex",alignItems:"center",gap:8,background:bleState===BLE.SCANNING||bleState===BLE.CONNECTING?C.surf3:gBrand,color:bleState===BLE.SCANNING||bleState===BLE.CONNECTING?C.gray:"#fff",border:"none",borderRadius:12,padding:"13px 32px",fontSize:15,fontWeight:700,marginBottom:10}}>
+                      <IcoBT s={18} c={bleState===BLE.SCANNING||bleState===BLE.CONNECTING?C.gray:"#fff"}/>
+                      {bleState===BLE.SCANNING?"กำลังสแกน...":bleState===BLE.CONNECTING?"กำลังเชื่อมต่อ...":"เชื่อมต่อ Smart Watch"}
+                    </button>
+                    <button className="btn" onClick={()=>setTab("workout")} style={{background:"transparent",color:C.gray,border:"1px solid #333",borderRadius:10,padding:"9px 22px",fontSize:12}}>ลอง Demo Mode</button>
+                  </>
+                )}
+              </div>
+            </div>
+            {/* Supported devices */}
+            <Card>
+              <SectionTitle icon={<IcoWatch s={15}/>} title="นาฬิกาที่รองรับ" sub="Bluetooth LE Heart Rate Service (GATT 0x180D)"/>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10}}>
+                {[
+                  {name:"Xiaomi / Amazfit",sub:"แนะนำสำหรับ Pilot",col:"#FF6B6B",badge:"BEST VALUE"},
+                  {name:"Samsung Galaxy Watch",sub:"Wear OS · Health",col:C.blue,badge:""},
+                  {name:"Apple Watch",sub:"iOS Native App",col:C.gray,badge:""},
+                  {name:"Fitbit Charge 5/6",sub:"Fitbit Web API",col:C.green,badge:""},
+                  {name:"Polar H10 HR Strap",sub:"BLE · HR Only",col:C.orange,badge:"HR Only"},
+                ].map((w,i)=>(
+                  <div key={i} style={{background:`${w.col}10`,border:`1px solid ${w.col}25`,borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+                    <IcoWatch s={22} c={w.col}/>
+                    <div style={{fontSize:11,fontWeight:700,color:w.col,marginTop:7,marginBottom:3}}>{w.name}</div>
+                    <div style={{fontSize:9,color:C.gray,marginBottom:w.badge?6:0}}>{w.sub}</div>
+                    {w.badge&&<div style={{background:w.col,color:"#000",fontSize:8,fontWeight:700,borderRadius:3,padding:"1px 5px",display:"inline-block"}}>{w.badge}</div>}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ═══ SOCIAL TAB ═══ */}
+        {tab==="social"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:18,animation:"slideUp 0.3s"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+              <Card>
+                <SectionTitle icon={<IcoUsers s={15} c={C.red}/>} title="Leaderboard" sub="ป้องกัน Office Syndrome ประจำสัปดาห์"/>
+                {[{r:1,name:"สมชาย ว.",pts:1240,st:12,b:"🥇"},{r:2,name:"นภา ก.",pts:1180,st:9,b:"🥈"},{r:3,name:"คุณ",pts:1050+totalS*50,st:totalS,b:"🥉"},{r:4,name:"วีรชัย ม.",pts:980,st:5,b:""},{r:5,name:"อุษา ร.",pts:870,st:4,b:""}].map((p,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 10px",marginBottom:3,borderRadius:10,background:p.name==="คุณ"?"linear-gradient(90deg,#200008,#180006)":"transparent",border:p.name==="คุณ"?"1px solid #E5002F30":"1px solid transparent"}}>
+                    <div style={{fontSize:20,width:28,textAlign:"center"}}>{p.b||`#${p.r}`}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:p.name==="คุณ"?700:500,color:p.name==="คุณ"?C.red:C.white}}>{p.name}</div>
+                      <div style={{fontSize:10,color:C.gray}}>🔥 {p.st} วัน streak</div>
+                    </div>
+                    <div style={{fontSize:18,fontWeight:700,color:i===0?C.yellow:i===1?"#C0C0C0":i===2?C.orange:C.white,whiteSpace:"nowrap"}}>{p.pts.toLocaleString()}</div>
+                  </div>
+                ))}
+              </Card>
+              <Card>
+                <SectionTitle icon={<IcoZap s={15} c={C.yellow}/>} title="HeartStretch Badges" sub="ความสำเร็จในการป้องกัน Office Syndrome"/>
+                {[
+                  {name:"First Beat",desc:"ยืดเส้นครั้งแรก",unlocked:totalS>=1,icon:"💗",col:C.red},
+                  {name:"Watch Sync",desc:"เชื่อมต่อ Smart Watch",unlocked:isConn,icon:"⌚",col:C.teal},
+                  {name:"Desk Warrior",desc:"ยืดทุกวัน 7 วันติด",unlocked:totalS>=3,icon:"⚔️",col:C.blue},
+                  {name:"Pain Slayer",desc:"ลดอาการปวด Office Syndrome 20%",unlocked:totalS>=5,icon:"🛡️",col:C.green},
+                  {name:"HR Zone Pro",desc:"HR อยู่ใน Zone ครบ 20 ครั้ง",unlocked:false,icon:"🎯",col:C.orange},
+                  {name:"Office Legend",desc:"ยืดเส้นครบ 200 ครั้ง",unlocked:false,icon:"👑",col:C.yellow},
+                ].map((a,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:11,padding:"8px 0",borderBottom:i<5?"1px solid #1E1E1E":"none",opacity:a.unlocked?1:0.35}}>
+                    <div style={{width:36,height:36,borderRadius:10,background:a.unlocked?`${a.col}20`:"#1A1A1A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{a.icon}</div>
+                    <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:a.unlocked?a.col:C.gray}}>{a.name}</div><div style={{fontSize:10,color:C.gray}}>{a.desc}</div></div>
+                    {a.unlocked&&<div style={{fontSize:9,color:C.green,fontWeight:700,background:"#051A0F",borderRadius:5,padding:"1px 6px"}}>✓</div>}
+                  </div>
+                ))}
+              </Card>
+            </div>
+            {/* Team challenge */}
+            <div style={{background:"linear-gradient(135deg,#12072A,#0D1030)",border:`1px solid ${C.purple}40`,borderRadius:16,padding:22}}>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:4,color:C.purple,display:"flex",alignItems:"center",gap:7}}><IcoUsers s={15} c={C.purple}/>Team Office Syndrome Challenge — ม.ค. 2026</div>
+              <div style={{fontSize:12,color:C.gray,marginBottom:18}}>ทีมไหนยืดเส้นมากที่สุดและลด Office Syndrome Risk Score ได้ดีที่สุดชนะ!</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+                {[{t:"ทีม Alpha",pts:4820,m:8,pct:100,col:C.yellow,rank:"🥇",you:false},{t:"ทีม Beta",pts:4650,m:7,pct:96,col:C.red,rank:"🥈",you:true},{t:"ทีม Gamma",pts:4210,m:9,pct:87,col:C.teal,rank:"🥉",you:false}].map((t,i)=>(
+                  <div key={i} style={{background:C.surf3,borderRadius:13,padding:18,border:t.you?"1px solid #E5002F":"none",position:"relative"}}>
+                    {t.you&&<div style={{position:"absolute",top:9,right:9,fontSize:9,background:C.red,color:"#fff",borderRadius:4,padding:"1px 5px",fontWeight:700}}>คุณ</div>}
+                    <div style={{fontSize:26,marginBottom:5}}>{t.rank}</div>
+                    <div style={{fontSize:15,fontWeight:700,color:t.col,marginBottom:3}}>{t.t}</div>
+                    <div style={{fontSize:11,color:C.gray,marginBottom:10}}>{t.m} สมาชิก</div>
+                    <div style={{fontSize:30,fontWeight:700,color:C.white,whiteSpace:"nowrap"}}>{t.pts.toLocaleString()}</div>
+                    <div style={{fontSize:10,color:C.gray,marginBottom:8}}>คะแนนรวม</div>
+                    <div style={{background:C.surf,borderRadius:4,height:6}}><div style={{background:t.col,height:6,borderRadius:4,width:`${t.pct}%`}}/></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+;(function __autoMount(){
+  var _C=exports.default;
+  if(!_C){
+    var _keys=Object.keys(exports);
+    for(var i=0;i<_keys.length;i++){
+      if(_keys[i]!=="__esModule"&&typeof exports[_keys[i]]==="function"){_C=exports[_keys[i]];break}
+    }
+  }
+  if(!_C&&typeof App!=="undefined")_C=App;
+  if(_C)ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(_C));
+})();
+</script>
+<script>(function(){var io=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting)x.target.classList.add("v")})},{threshold:.05});function observeAll(r){r.querySelectorAll(".f:not(.v)").forEach(function(el){io.observe(el)})}observeAll(document);new MutationObserver(function(m){for(var i=0;i<m.length;i++)for(var j=0;j<m[i].addedNodes.length;j++){var n=m[i].addedNodes[j];if(n.nodeType===1){if(n.classList&&n.classList.contains("f"))io.observe(n);if(n.querySelectorAll)observeAll(n)}}}).observe(document.body,{childList:true,subtree:true})})();</script>
+</body>
+</html>
